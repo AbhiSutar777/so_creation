@@ -137,13 +137,18 @@ app_license = "mit"
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-# 	}
-# }
+doc_events = {
+	# "*": {
+	# 	"on_update": "method",
+	# 	"on_cancel": "method",
+	# 	"on_trash": "method"
+	# }
+	"Upload Data": {
+	"before_save" : [
+		"so_creation.so_creation.doctype.upload_data.upload_data.set_doc_name",				  
+	],
+	}
+}
 
 # Scheduled Tasks
 # ---------------
