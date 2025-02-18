@@ -31,7 +31,7 @@ from openpyxl.styles import numbers
 class ManualSalesForecastUpdate(Document):
 	pass
 
-SALES_FORECAST_FIELDS = ["purch_doc","product_id","quantity","uom","net_price","crcy","per","corporate_name","doc_date","customer_name"]
+UPLOAD_TEMPLATE_COLUMNS = ["purch_doc","product_id","quantity","uom","net_price","crcy","per","corporate_name","doc_date","customer_name"]
 
 def read_data_from_excel(file_path, field_list):
     try:
@@ -102,7 +102,7 @@ def set_doc_name(doc, method=None):
 	if doc.is_new():
 		# Read excel data
 		file_path = get_url() + doc.attach_file
-		records = read_data_from_excel(file_path, SALES_FORECAST_FIELDS)
+		records = read_data_from_excel(file_path, UPLOAD_TEMPLATE_COLUMNS)
 		##--------------------------------------------------------------------------------------------------------------------
 		## Get PO NUMBER...
 		po_no_list = []
@@ -125,7 +125,7 @@ def process_file(data):
     
     # Read excel data
     file_path = get_url() + data.get("attach_file")
-    records = read_data_from_excel(file_path, SALES_FORECAST_FIELDS)
+    records = read_data_from_excel(file_path, UPLOAD_TEMPLATE_COLUMNS)
     ##--------------------------------------------------------------------------------------------------------------------
     ## Get PO NUMBER...
     po_no_list = []
