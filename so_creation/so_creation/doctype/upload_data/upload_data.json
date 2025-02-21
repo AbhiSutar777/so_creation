@@ -39,13 +39,14 @@
   {
    "fieldname": "upload_data",
    "fieldtype": "Button",
+   "hidden": 1,
    "label": "Upload Data"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-02-18 12:44:08.323576",
+ "modified": "2025-02-21 12:54:39.296341",
  "modified_by": "Administrator",
  "module": "So Creation",
  "name": "Upload Data",
