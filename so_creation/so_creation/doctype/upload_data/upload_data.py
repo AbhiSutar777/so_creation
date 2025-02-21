@@ -116,8 +116,6 @@ def set_doc_name(doc, method=None):
 			po_no = po_no_list[0]
 			doc.name = po_no
 
-
-
 ##----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 @frappe.whitelist()
 def process_file(data):
@@ -207,7 +205,7 @@ def create_sales_order_from_excel(doc, method=None):
     # # Call the process_po_data function to extract the data
     customer_name, po_no, po_date, item_table = process_file(doc)
 
-    # # Now call the create_sales_order with the extracted values
+    # Now call the create_sales_order with the extracted values
     create_sales_order(customer_name, po_no, po_date, item_table)
 
 
@@ -294,7 +292,7 @@ def get_or_create_uom(uom_name):
         uom = frappe.new_doc("UOM")
         uom.uom_name = uom_name
         uom.save()
-        frappe.msgprint(f"New UOM '{uom_name}' created.")
+        # frappe.msgprint(f"New UOM '{uom_name}' created.")
 
     return uom_name  # Return the standardized UOM name
 
@@ -309,9 +307,9 @@ def get_or_create_customer(customer_name):
         customer = frappe.new_doc("Customer")
         customer.customer_name = customer_name
         customer.save()
-        frappe.msgprint(f"New customer '{customer_name}' created.")
+        # frappe.msgprint(f"New customer '{customer_name}' created.")
 
-    return customer
+    return customer.name
 
 # # # Check If Item exists in system or not------------------------------------------------------------------------------------------------------------------------------
 def get_or_create_item(item_name):
@@ -326,6 +324,6 @@ def get_or_create_item(item_name):
         item.item_code = item_name
         item.item_group = "All Item Groups"  # Set the default item group
         item.save()
-        frappe.msgprint(f"New item '{item_name}' created.")
+        # frappe.msgprint(f"New item '{item_name}' created.")
 
     return item.item_code  # Return the item_code
