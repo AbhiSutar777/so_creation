@@ -273,8 +273,8 @@ def create_sales_order(customer_name, po_no, po_date, item_table):
 
     # # Show success message
     frappe.msgprint(
-        f"Sales Forecast Upload Records created successfully. Click on "
-        f"<a href='http://127.0.0.1:8000/app/sales-order/{sales_order.name}' target='_blank'>{sales_order.name}</a> to view the Sales Order."
+        f"Sales Order has been created successfully. Click on "
+        f"<a href='http://techno2.dev.vedarthsolutions.com/app/sales-order/{sales_order.name}' target='_blank'>{sales_order.name}</a> to view the Sales Order."
     )
     return sales_order.name
 
