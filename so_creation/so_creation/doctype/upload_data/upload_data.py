@@ -31,7 +31,7 @@ from openpyxl.styles import numbers
 class ManualSalesForecastUpdate(Document):
 	pass
 
-UPLOAD_TEMPLATE_COLUMNS = ["purch_doc","product_id","quantity","uom","net_price","crcy","per","corporate_name","doc_date","customer_name"]
+UPLOAD_TEMPLATE_COLUMNS = ["purchase_order_no","purchase_order_date","customer_name","item_code","description","quantity","uom","net_price"]
 
 def read_data_from_excel(file_path, field_list):
     try:
@@ -50,14 +50,16 @@ def read_data_from_excel(file_path, field_list):
     except Exception as e:
         raise e
 
-def create_manual_sales_forecast_update(data):
+##-----------------------------------------------------------------------------------------------------------------------
+
+def create_download_data_template(data):
     # records = get_party_specific_items(data)
     workbook = Workbook()
     sheet = workbook.active
     sheet.title = "data"
 
     # Hardcoded headers if something is changed update here
-    sheet.append(["purch_doc","product_id","quantity","uom","net_price","crcy","per","corporate_name","doc_date","customer_name"])
+    sheet.append(["purchase_order_no","purchase_order_date","customer_name","item_code","description","quantity","uom","net_price"])
 
     name = f"upload_data_template"
     file_path = f"/tmp/{name}_.xlsx"
@@ -71,7 +73,7 @@ def create_manual_sales_forecast_update(data):
 @frappe.whitelist()
 def download_excel_file(data):
     data = json.loads(data)
-    file_path = create_manual_sales_forecast_update(data)
+    file_path = create_download_data_template(data)
 
     with open(file_path, "rb") as filedata:
         file_name = os.path.basename(file_path)  # Extract the file name from the path
@@ -107,8 +109,8 @@ def set_doc_name(doc, method=None):
 		## Get PO NUMBER...
 		po_no_list = []
 		for r in records:
-			if r['purch_doc'] not in po_no_list:
-				po_no_list.append(r['purch_doc'])
+			if r['purchase_order_no'] not in po_no_list:
+				po_no_list.append(r['purchase_order_no'])
 				po_no = ''
 		if len(po_no_list) > 1:
 			frappe.throw(f"You cannot include more than 1 customer in one Upload Templante.")
@@ -128,8 +130,8 @@ def process_file(data):
     ## Get PO NUMBER...
     po_no_list = []
     for r in records:
-    	if r['purch_doc'] not in po_no_list:
-    		po_no_list.append(r['purch_doc'])
+    	if r['purchase_order_no'] not in po_no_list:
+    		po_no_list.append(r['purchase_order_no'])
 
     po_no = ''
     if len(po_no_list) > 1:
@@ -158,8 +160,8 @@ def process_file(data):
 	## Get CUSTOMER NAME...
     po_date_list = []
     for r in records:
-    	if r['doc_date'] not in po_date_list:
-    		po_date_list.append(r['doc_date'])
+    	if r['purchase_order_date'] not in po_date_list:
+    		po_date_list.append(r['purchase_order_date'])
 
     po_date = ''
     if len(po_date_list) > 1:
@@ -175,13 +177,14 @@ def process_file(data):
     for r in records:
     	# found = False
     	# for i in item_table:
-    	# 	if r['product_id'] == i['item_code'] and r['quantity'] == i['qty']:
+    	# 	if r['item_code'] == i['item_code'] and r['quantity'] == i['qty']:
     	# 		found = True
     	# 	else:
     	# 		pass
-    	# if found == False:
+    	# if found == False: "item_description",
     	item_table.append({
-            "item_name": r["product_id"],
+            "item_name": r["item_code"],
+            "description": r["description"],
             "qty": r["quantity"],
             "rate": r["net_price"],
             "uom": r["uom"]
@@ -236,12 +239,13 @@ def create_sales_order(customer_name, po_no, po_date, item_table):
     for idx, item in enumerate(item_table):
     # # for item in item_table:
         item_name = item.get("item_name")
+        description = item.get("description")
         qty = float(item.get("qty", 0))  # Default to 0 if quantity is missing
         rate = item.get("rate", "0")  # Default to "0" if rate is missing
         uom = item.get("uom", "Nos")
 
         # # Check if item exists, if not create new
-        item_code = get_or_create_item(item_name)
+        item_code = get_or_create_item(item_name, description)
 
         # # Ensure UOM exists, if not create it
         uom_name = get_or_create_uom(uom)  # Pass the cleaned UOM
@@ -270,14 +274,16 @@ def create_sales_order(customer_name, po_no, po_date, item_table):
     # sales_order.submit()  # Uncomment to submit the Sales Order
 
     # # Show success message
+    base_url = frappe.utils.get_url()
     frappe.msgprint(
         f"Sales Order has been created successfully. Click on "
-        f"<a href='http://techno2.dev.vedarthsolutions.com/app/sales-order/{sales_order.name}' target='_blank'>{sales_order.name}</a> to view the Sales Order."
+        f"<a href='{base_url}/app/sales-order/{sales_order.name}' target='_blank'>{sales_order.name}</a> to view the Sales Order."
     )
     return sales_order.name
 
-###-----------------------------------------------------------------------------------------------------------------------------------------------
-###-----------------------------------------------------------------------------------------------------------------------------------------------
+###=====================================================================================================================
+###=====================================================================================================================
+###=====================================================================================================================
 
 # # # Check If UOM exists in system or not------------------------------------------------------------------------------------------------------------------------------
 def get_or_create_uom(uom_name):
@@ -312,7 +318,7 @@ def get_or_create_customer(customer_name):
     return customer.name
 
 # # # Check If Item exists in system or not------------------------------------------------------------------------------------------------------------------------------
-def get_or_create_item(item_name):
+def get_or_create_item(item_name, description):
     """
     Check if an item exists by name, if not, create a new item.
     """
@@ -321,6 +327,7 @@ def get_or_create_item(item_name):
     else:
         item = frappe.new_doc("Item")
         item.item_name = item_name
+        item.description = description
         item.item_code = item_name
         item.item_group = "All Item Groups"  # Set the default item group
         item.save()
