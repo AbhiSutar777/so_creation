@@ -249,14 +249,19 @@ def create_sales_order(customer_name, po_no, po_date, item_table):
 
         # # Ensure UOM exists, if not create it
         uom_name = get_or_create_uom(uom)  # Pass the cleaned UOM
+        # frappe.msgprint(f"{item_code}")
+
+        final_rate = rate
+        # final_rate = get_or_create_price_list(item_code, rate, uom_name)
 
         # # Add the item to the sales order item list
         items_list.append({
             "item_code": item_code,
             "qty": qty,
-            "rate": rate,  # Convert cleaned rate to float
+            "rate": final_rate,  # Convert cleaned rate to float
             "uom": uom_name,  # Include UOM in the Sales Order Item
-            "delivery_date" : customer_requirement_date
+            "delivery_date" : customer_requirement_date,
+            "price_list_rate" : final_rate
         })
 
     # # Create a new Sales Order
@@ -269,11 +274,11 @@ def create_sales_order(customer_name, po_no, po_date, item_table):
         "items": items_list,
     })
 
-    # # Save and optionally submit the Sales Order
+    # Save and optionally submit the Sales Order
     sales_order.save()
-    # sales_order.submit()  # Uncomment to submit the Sales Order
+    ## sales_order.submit()  # Uncomment to submit the Sales Order
 
-    # # Show success message
+    # Show success message
     base_url = frappe.utils.get_url()
     frappe.msgprint(
         f"Sales Order has been created successfully. Click on "
@@ -322,8 +327,12 @@ def get_or_create_item(item_name, description):
     """
     Check if an item exists by name, if not, create a new item.
     """
-    if frappe.db.exists("Item", {"item_name": ['like', f"%{item_name}%"]}):
+    if frappe.db.exists("Item", {"name": ['like', f"%{item_name}%"]}):
+        item = frappe.get_doc("Item", {"name": ['like', f"%{item_name}%"]})
+
+    elif frappe.db.exists("Item", {"item_name": ['like', f"%{item_name}%"]}):
         item = frappe.get_doc("Item", {"item_name": ['like', f"%{item_name}%"]})
+        
     else:
         item = frappe.new_doc("Item")
         item.item_name = item_name
@@ -334,3 +343,54 @@ def get_or_create_item(item_name, description):
         # frappe.msgprint(f"New item '{item_name}' created.")
 
     return item.item_code  # Return the item_code
+
+# # # # Create a Price List for Items------------------------------------------------------------------------------------------------------------------------------
+# def get_or_create_price_list(item_name, rate, uom):
+#     """
+#     Check if an item price list exists, validate the rate, and create a new price list if necessary.
+#     """
+#     frappe.msgprint(f"{item_name}")
+
+#     final_rate = rate
+#     price_list = frappe.db.get_list(
+#         "Item Price", 
+#         filters={'item_code': item_name, 'selling': 1}, 
+#         fields=['name'],
+#         order_by="valid_from desc",
+#         limit=1
+#     )
+
+#     ## IF PREVIOUS PRICE LIST EXISTS, VALIDATE RATE
+#     if price_list:
+#         name = price_list[0]['name']
+#         pl_doc = frappe.get_doc("Item Price", name)
+
+#         # If the previous rate and given rate match, return the same rate
+#         if rate == pl_doc.price_list_rate:
+#             final_rate = rate
+
+#         # If the rates don't match, create a new price list
+#         else:
+#             final_rate = rate
+#             new_pl = frappe.new_doc("Item Price")
+#             new_pl.item_code = item_name
+#             new_pl.uom = uom
+#             new_pl.price_list = "Standard Selling"
+#             new_pl.price_list_rate = rate
+#             new_pl.valid_from = frappe.utils.today()
+#             new_pl.save()
+#             frappe.db.commit()  # Ensure the new record is saved to the database
+
+#     ## IF NO PREVIOUS PRICE LIST EXISTS, CREATE A NEW ONE
+#     else:
+#         final_rate = rate
+#         new_pl = frappe.new_doc("Item Price")
+#         new_pl.item_code = item_name
+#         new_pl.uom = uom
+#         new_pl.price_list = "Standard Selling"
+#         new_pl.price_list_rate = rate
+#         new_pl.valid_from = frappe.utils.today()
+#         new_pl.save()
+#         frappe.db.commit()
+
+#     return final_rate  # Return the rate
